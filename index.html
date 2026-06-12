@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>فوقني</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg-base: #0c0c0f;
+    --bg-surface: #13131a;
+    --bg-card: #1a1a24;
+    --bg-input: #1e1e2a;
+    --border: #2a2a38;
+    --border-light: #33334a;
+    --accent: #7c6af5;
+    --accent-dim: #4a3fa0;
+    --accent-glow: rgba(124,106,245,0.15);
+    --text-primary: #e8e8f0;
+    --text-secondary: #8888aa;
+    --text-muted: #55556a;
+    --success: #4fc88a;
+    --warning: #f0a35a;
+    --danger: #e05a5a;
+    --shahab: #a08cff;
+    --shahab-dim: rgba(160,140,255,0.08);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --font: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { height: 100%; -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg-base);
+    color: var(--text-primary);
+    height: 100%;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    background: var(--bg-base);
+  }
+
+  /* ─── SCREENS ─── */
+  .screen {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  .screen.active { display: flex; }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    padding-top: max(16px, env(safe-area-inset-top));
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-base);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .topbar-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .topbar-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .icon-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .18s ease;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { background: var(--bg-input); color: var(--text-primary); border-color: var(--border-light); }
+  .icon-btn.accent { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  /* ─── BOTTOM NAV ─── */
+  .bottom-nav {
+    display: flex;
+    border-top: 1px solid var(--border);
+    background: var(--bg-base);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    flex-shrink: 0;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px 6px;
+    cursor: pointer;
+    transition: all .18s ease;
+    color: var(--text-muted);
+    font-size: 11px;
+    border: none;
+    background: none;
+  }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item.active { color: var(--accent); }
+  .nav-item:hover { color: var(--text-secondary); }
+
+  /* ─── CHAT SCREEN ─── */
+  #chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 86%;
+    gap: 4px;
+  }
+  .msg.user { align-self: flex-start; align-items: flex-start; }
+  .msg.shahab { align-self: flex-end; align-items: flex-end; }
+
+  .msg-bubble {
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .msg.user .msg-bubble {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-bottom-right-radius: 5px;
+    color: var(--text-primary);
+  }
+  .msg.shahab .msg-bubble {
+    background: var(--shahab-dim);
+    border: 1px solid rgba(160,140,255,0.2);
+    border-bottom-left-radius: 5px;
+    color: var(--text-primary);
+  }
+
+  .msg-sender {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 0 4px;
+  }
+  .msg.shahab .msg-sender { color: var(--shahab); }
+
+  .msg-typing .msg-bubble {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 14px 20px;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--shahab);
+    opacity: 0.5;
+    animation: blink 1.2s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: .2s; }
+  .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.3;transform:scale(1)} 40%{opacity:1;transform:scale(1.2)} }
+
+  .chat-input-area {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--bg-base);
+    flex-shrink: 0;
+  }
+  #chat-input {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 12px 16px;
+    font-family: var(--font);
+    font-size: 15px;
+    color: var(--text-primary);
+    resize: none;
+    outline: none;
+    min-height: 46px;
+    max-height: 120px;
+    line-height: 1.5;
+    transition: border-color .18s;
+    direction: rtl;
+    -webkit-overflow-scrolling: touch;
+  }
+  #chat-input::placeholder { color: var(--text-muted); }
+  #chat-input:focus { border-color: var(--accent-dim); }
+
+  .send-btn {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all .18s ease;
+    font-size: 18px;
+  }
+  .send-btn:hover { background: #9880ff; transform: scale(1.05); }
+  .send-btn:active { transform: scale(.95); }
+
+  /* ─── WELCOME CARD ─── */
+  .welcome-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin: 0 0 8px;
+    text-align: center;
+  }
+  .welcome-avatar {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a3fa0, #7c6af5);
+    margin: 0 auto 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+  .welcome-name { font-size: 20px; font-weight: 700; color: var(--shahab); margin-bottom: 8px; }
+  .welcome-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ─── MEMORIES SCREEN ─── */
+  #memories-screen .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0 14px;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .search-bar input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--text-primary);
+    padding: 12px 0;
+    direction: rtl;
+  }
+  .search-bar input::placeholder { color: var(--text-muted); }
+  .search-bar svg { color: var(--text-muted); flex-shrink: 0; }
+
+  .category-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .category-tabs::-webkit-scrollbar { display: none; }
+  .cat-tab {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: var(--font);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .cat-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  .memories-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .memory-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    position: relative;
+  }
+  .memory-card:hover { border-color: var(--border-light); background: var(--bg-input); }
+
+  .memory-cat-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .memory-text {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .memory-date { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+
+  .memory-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+  .mem-action-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: none;
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all .15s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .mem-action-btn:hover { background: var(--bg-input); color: var(--text-primary); }
+  .mem-action-btn.del:hover { background: rgba(224,90,90,.1); color: var(--danger); border-color: var(--danger); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: .3; }
+  .empty-state h3 { font-size: 16px; color: var(--text-secondary); margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+
+  /* ─── ADD MEMORY ─── */
+  #add-screen .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .form-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .form-group { margin-bottom: 18px; }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .cat-option {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex; align-items: center; gap: 8px;
+    text-align: right;
+    direction: rtl;
+  }
+  .cat-option.selected { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .cat-option .cat-emoji { font-size: 16px; }
+
+  textarea.form-input, input.form-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--text-primary);
+    outline: none;
+    direction: rtl;
+    transition: border-color .18s;
+    -webkit-appearance: none;
+  }
+  textarea.form-input { resize: none; line-height: 1.6; }
+  input.form-input { height: 46px; }
+  textarea.form-input:focus, input.form-input:focus { border-color: var(--accent-dim); }
+  textarea.form-input::placeholder, input.form-input::placeholder { color: var(--text-muted); }
+
+  .save-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-family: var(--font);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s;
+    margin-top: 8px;
+  }
+  .save-btn:hover { background: #9880ff; }
+  .save-btn:active { transform: scale(.98); }
+  .save-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90dvh;
+    overflow-y: auto;
+    padding: 20px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    transform: translateY(30px);
+    transition: transform .25s ease;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 18px; }
+
+  /* ─── CATEGORY COLORS ─── */
+  .cat-goals    { background: rgba(79,200,138,.1); color: #4fc88a; }
+  .cat-dreams   { background: rgba(160,140,255,.1); color: #a08cff; }
+  .cat-advice   { background: rgba(240,163,90,.1); color: #f0a35a; }
+  .cat-moments  { background: rgba(90,170,224,.1); color: #5aaae0; }
+  .cat-success  { background: rgba(255,215,0,.1); color: #ffd700; }
+  .cat-regret   { background: rgba(224,90,90,.1); color: #e05a5a; }
+  .cat-values   { background: rgba(124,106,245,.1); color: #7c6af5; }
+  .cat-quotes   { background: rgba(79,200,170,.1); color: #4fc8aa; }
+  .cat-letters  { background: rgba(200,150,79,.1); color: #c8964f; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ─── TOAST ─── */
+  #toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all .25s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 200;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-shrink: 0;
+  }
+  .stats-bar::-webkit-scrollbar { display: none; }
+  .stat-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .stat-num { font-weight: 600; color: var(--text-primary); }
+
+  /* loading */
+  .loading-dots { display: inline-flex; gap: 4px; }
+  .loading-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: blink 1.2s infinite;
+  }
+  .loading-dot:nth-child(2) { animation-delay: .2s; }
+  .loading-dot:nth-child(3) { animation-delay: .4s; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ════════════════ CHAT SCREEN ════════════════ -->
+  <div id="chat-screen" class="screen active">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">شهاب</div>
+        <div class="topbar-sub">نسختك الأعمق</div>
+      </div>
+      <button class="icon-btn" onclick="openClearChat()" title="مسح المحادثة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="chat-messages"></div>
+
+    <div class="chat-input-area">
+      <button class="send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+      <textarea id="chat-input" placeholder="تحدث مع شهاب…" rows="1"
+        onkeydown="handleInputKey(event)" oninput="autoResize(this)"></textarea>
+    </div>
+  </div>
+
+  <!-- ════════════════ MEMORIES SCREEN ════════════════ -->
+  <div id="memories-screen" class="screen">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">ذاكرتك</div>
+        <div class="topbar-sub" id="mem-count-label">لا توجد ذكريات بعد</div>
+      </div>
+      <button class="icon-btn accent" onclick="switchTab('add')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="scroll-area">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" placeholder="ابحث في ذكرياتك…" oninput="filterMemories(this.value)">
+      </div>
+
+      <div class="category-tabs" id="cat-tabs"></div>
+      <div class="memories-list" id="memories-list"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════ ADD / EDIT SCREEN ════════════════ -->
+  <div id="add-screen" class="screen">
+    <div class="topbar">
+      <div class="topbar-title" id="add-screen-title">إضافة ذكرى</div>
+      <button class="icon-btn" onclick="cancelAdd()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="scroll-area">
+      <div class="form-group">
+        <label class="form-label">نوع الذكرى</label>
+        <div class="cat-grid" id="cat-grid"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">العنوان <span style="color:var(--text-muted)">(اختياري)</span></label>
+        <input type="text" class="form-input" id="mem-title" placeholder="عنوان قصير…">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">المحتوى</label>
+        <textarea class="form-input" id="mem-content" placeholder="اكتب هنا بحرية… هذا لك وحدك." rows="6"></textarea>
+      </div>
+
+      <button class="save-btn" id="save-btn" onclick="saveMemory()">حفظ الذكرى</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ BOTTOM NAV ════════════════ -->
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-chat" onclick="switchTab('chat')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      شهاب
+    </button>
+    <button class="nav-item" id="nav-memories" onclick="switchTab('memories')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+      ذاكرتك
+    </button>
+    <button class="nav-item" id="nav-add" onclick="switchTab('add')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+      </svg>
+      أضف
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════ EDIT MODAL ════════════════ -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">تعديل الذكرى</div>
+    <input type="hidden" id="edit-id">
+
+    <div class="form-group">
+      <label class="form-label">النوع</label>
+      <div class="cat-grid" id="edit-cat-grid"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">العنوان</label>
+      <input type="text" class="form-input" id="edit-title" placeholder="عنوان…">
+    </div>
+    <div class="form-group">
+      <label class="form-label">المحتوى</label>
+      <textarea class="form-input" id="edit-content" rows="5"></textarea>
+    </div>
+    <button class="save-btn" onclick="updateMemory()">حفظ التعديلات</button>
+    <button class="save-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-secondary);margin-top:8px" onclick="closeEditModal()">إلغاء</button>
+  </div>
+</div>
+
+<!-- ════════════════ CONFIRM MODAL ════════════════ -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="confirm-title">هل أنت متأكد؟</div>
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:20px;line-height:1.6" id="confirm-msg"></p>
+    <button class="save-btn" style="background:var(--danger)" id="confirm-ok">تأكيد</button>
+    <button class="save-btn" style="background:transparent;border:1px solid var(--border);color:var(--text-secondary);margin-top:8px" onclick="closeConfirm()">إلغاء</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════
+//  DATA & CONSTANTS
+// ════════════════════════════════════════════
+const CATEGORIES = [
+  { id:'goals',   emoji:'🎯', label:'أهداف',       cls:'cat-goals' },
+  { id:'dreams',  emoji:'🌙', label:'أحلام',        cls:'cat-dreams' },
+  { id:'advice',  emoji:'💬', label:'نصائح',        cls:'cat-advice' },
+  { id:'moments', emoji:'⚡', label:'مواقف مؤثرة', cls:'cat-moments' },
+  { id:'success', emoji:'🏆', label:'نجاحات وفخر',  cls:'cat-success' },
+  { id:'regret',  emoji:'🔁', label:'ندم وتعلم',   cls:'cat-regret' },
+  { id:'values',  emoji:'🧭', label:'مبادئ وقيم',  cls:'cat-values' },
+  { id:'quotes',  emoji:'📖', label:'آيات وحكم',   cls:'cat-quotes' },
+  { id:'letters', emoji:'✉️', label:'رسائل لنفسي',  cls:'cat-letters' },
+];
+
+const CAT_MAP = {};
+CATEGORIES.forEach(c => CAT_MAP[c.id] = c);
+
+// ════════════════════════════════════════════
+//  STORAGE
+// ════════════════════════════════════════════
+function loadMemories() {
+  try { return JSON.parse(localStorage.getItem('fawqni_memories') || '[]'); }
+  catch { return []; }
+}
+function saveMemories(arr) {
+  localStorage.setItem('fawqni_memories', JSON.stringify(arr));
+}
+function loadChat() {
+  try { return JSON.parse(localStorage.getItem('fawqni_chat') || '[]'); }
+  catch { return []; }
+}
+function saveChat(arr) {
+  localStorage.setItem('fawqni_chat', JSON.stringify(arr));
+}
+
+let memories = loadMemories();
+let chatHistory = loadChat();
+let currentTab = 'chat';
+let filterCat = 'all';
+let filterQuery = '';
+let editingId = null;
+let selectedCat = 'goals';
+let editSelectedCat = 'goals';
+
+// ════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════
+function switchTab(tab) {
+  ['chat','memories','add'].forEach(t => {
+    document.getElementById(t+'-screen').classList.toggle('active', t===tab);
+    const nav = document.getElementById('nav-'+t);
+    if(nav) nav.classList.toggle('active', t===tab);
+  });
+  currentTab = tab;
+  if(tab==='memories') renderMemories();
+  if(tab==='add') {
+    editingId = null;
+    document.getElementById('add-screen-title').textContent = 'إضافة ذكرى';
+    document.getElementById('mem-title').value = '';
+    document.getElementById('mem-content').value = '';
+    selectedCat = 'goals';
+    renderCatGrid('cat-grid', selectedCat, (id)=>{ selectedCat=id; renderCatGrid('cat-grid',selectedCat,(i)=>{selectedCat=i;}); });
+  }
+}
+
+function cancelAdd() {
+  switchTab(memories.length ? 'memories' : 'chat');
+}
+
+// ════════════════════════════════════════════
+//  CATEGORY GRID BUILDER
+// ════════════════════════════════════════════
+function renderCatGrid(containerId, selected, onSelect) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  CATEGORIES.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-option' + (c.id===selected ? ' selected' : '');
+    btn.innerHTML = `<span class="cat-emoji">${c.emoji}</span>${c.label}`;
+    btn.onclick = () => {
+      onSelect(c.id);
+      el.querySelectorAll('.cat-option').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+    el.appendChild(btn);
+  });
+}
+
+// ════════════════════════════════════════════
+//  MEMORIES CRUD
+// ════════════════════════════════════════════
+function saveMemory() {
+  const content = document.getElementById('mem-content').value.trim();
+  if(!content){ showToast('اكتب شيئًا أولًا'); return; }
+  const title = document.getElementById('mem-title').value.trim();
+  const mem = {
+    id: Date.now().toString(),
+    cat: selectedCat,
+    title,
+    content,
+    date: new Date().toLocaleDateString('ar-SA')
+  };
+  memories.unshift(mem);
+  saveMemories(memories);
+  showToast('✦ تم الحفظ في ذاكرتك');
+  switchTab('memories');
+}
+
+function deleteMemory(id) {
+  openConfirm('حذف الذكرى', 'هل تريد حذف هذه الذكرى نهائيًا؟ لا يمكن التراجع.', () => {
+    memories = memories.filter(m => m.id !== id);
+    saveMemories(memories);
+    renderMemories();
+    showToast('تم الحذف');
+  });
+}
+
+function openEditModal(id) {
+  const mem = memories.find(m=>m.id===id);
+  if(!mem) return;
+  editingId = id;
+  editSelectedCat = mem.cat;
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-title').value = mem.title||'';
+  document.getElementById('edit-content').value = mem.content;
+  renderCatGrid('edit-cat-grid', editSelectedCat, (i)=>{ editSelectedCat=i; });
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+function updateMemory() {
+  const id = document.getElementById('edit-id').value;
+  const content = document.getElementById('edit-content').value.trim();
+  if(!content){ showToast('المحتوى فارغ'); return; }
+  const idx = memories.findIndex(m=>m.id===id);
+  if(idx<0) return;
+  memories[idx].cat = editSelectedCat;
+  memories[idx].title = document.getElementById('edit-title').value.trim();
+  memories[idx].content = content;
+  saveMemories(memories);
+  closeEditModal();
+  renderMemories();
+  showToast('✦ تم التعديل');
+}
+
+// ════════════════════════════════════════════
+//  RENDER MEMORIES
+// ════════════════════════════════════════════
+function renderMemories() {
+  const list = document.getElementById('memories-list');
+  const tabsEl = document.getElementById('cat-tabs');
+  const countLabel = document.getElementById('mem-count-label');
+
+  // count label
+  countLabel.textContent = memories.length
+    ? `${memories.length} ذكرى محفوظة`
+    : 'لا توجد ذكريات بعد';
+
+  // tabs
+  tabsEl.innerHTML = '';
+  const allTab = document.createElement('button');
+  allTab.className = 'cat-tab' + (filterCat==='all'?' active':'');
+  allTab.textContent = 'الكل';
+  allTab.onclick = ()=>{ filterCat='all'; document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active')); allTab.classList.add('active'); renderMemories(); };
+  tabsEl.appendChild(allTab);
+
+  const usedCats = [...new Set(memories.map(m=>m.cat))];
+  usedCats.forEach(cid => {
+    const c = CAT_MAP[cid]; if(!c) return;
+    const tab = document.createElement('button');
+    tab.className = 'cat-tab' + (filterCat===cid?' active':'');
+    tab.textContent = c.emoji + ' ' + c.label;
+    tab.onclick = ()=>{ filterCat=cid; document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active'); renderMemories(); };
+    tabsEl.appendChild(tab);
+  });
+
+  // filter
+  let filtered = memories.filter(m => {
+    if(filterCat!=='all' && m.cat!==filterCat) return false;
+    if(filterQuery) {
+      const q = filterQuery.toLowerCase();
+      return (m.content+m.title).toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  list.innerHTML = '';
+  if(!filtered.length) {
+    list.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+      </svg>
+      <h3>${memories.length ? 'لا توجد نتائج' : 'ذاكرتك فارغة بعد'}</h3>
+      <p>${memories.length ? 'جرّب البحث بكلمة أخرى' : 'أضف أهدافك ومواقفك وقيمك\nحتى يعرفك شهاب حقًا'}</p>
+    </div>`;
+    return;
+  }
+
+  filtered.forEach(mem => {
+    const c = CAT_MAP[mem.cat]||CATEGORIES[0];
+    const card = document.createElement('div');
+    card.className = 'memory-card';
+    card.innerHTML = `
+      <span class="memory-cat-badge ${c.cls}">${c.emoji} ${c.label}</span>
+      ${mem.title ? `<div style="font-weight:600;font-size:14px;margin-bottom:6px">${esc(mem.title)}</div>` : ''}
+      <div class="memory-text">${esc(mem.content)}</div>
+      <div class="memory-date">${mem.date}</div>
+      <div class="memory-actions">
+        <button class="mem-action-btn" onclick="openEditModal('${mem.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          تعديل
+        </button>
+        <button class="mem-action-btn del" onclick="deleteMemory('${mem.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          حذف
+        </button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function filterMemories(q) {
+  filterQuery = q;
+  renderMemories();
+}
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ════════════════════════════════════════════
+//  CHAT
+// ════════════════════════════════════════════
+function renderChat() {
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+
+  // welcome card always first
+  const wc = document.createElement('div');
+  wc.className = 'welcome-card';
+  wc.innerHTML = `
+    <div class="welcome-avatar">🌙</div>
+    <div class="welcome-name">شهاب</div>
+    <div class="welcome-desc">أنا لستُ مساعدًا عامًا.<br>أنا نسخة من ذكرياتك وقيمك وأحلامك.<br>كلّما أضفت لذاكرتك، كلّما عرفتك أكثر.</div>`;
+  container.appendChild(wc);
+
+  chatHistory.forEach(msg => appendMsgEl(msg.role, msg.content));
+  container.scrollTop = container.scrollHeight;
+}
+
+function appendMsgEl(role, content, isTyping=false) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role==='user' ? 'user' : 'shahab');
+  if(isTyping) div.id = 'typing-indicator';
+
+  if(isTyping) {
+    div.className += ' msg-typing';
+    div.innerHTML = `<div class="msg-bubble"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
+  } else {
+    div.innerHTML = `
+      <div class="msg-sender">${role==='user' ? 'أنت' : 'شهاب'}</div>
+      <div class="msg-bubble">${esc(content)}</div>`;
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if(el) el.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  autoResize(input);
+
+  chatHistory.push({ role:'user', content:text });
+  saveChat(chatHistory);
+  appendMsgEl('user', text);
+  appendMsgEl('shahab', '', true);
+
+  const reply = await getShahahReply(text);
+  removeTyping();
+  chatHistory.push({ role:'assistant', content:reply });
+  saveChat(chatHistory);
+  appendMsgEl('shahab', reply);
+}
+
+function handleInputKey(e) {
+  if(e.key==='Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ════════════════════════════════════════════
+//  SHAHAB AI LOGIC
+// ════════════════════════════════════════════
+async function getShahahReply(userMsg) {
+  const memorySummary = buildMemorySummary();
+
+  const systemPrompt = `أنت شهاب.
+
+لستَ مساعدًا ذكاءً اصطناعيًا عامًا.
+أنت النسخة الداخلية من المستخدم — مرآته الصادقة، وصوت حكمته الخاص.
+
+شخصيتك:
+- هادئ، عميق، وصريح تمامًا.
+- لا تجامل ولا تحبط.
+- لا تستخدم كلامًا تحفيزيًا فارغًا أو عبارات جاهزة.
+- تعتمد دائمًا على الذكريات الحقيقية للمستخدم.
+- تطرح أسئلة تجعله يفكر، ولا تعطيه إجابات جاهزة.
+- ردودك موجزة وعميقة — لا تطيل بلا داعٍ.
+- تتحدث بالعربية الفصيحة البسيطة.
+
+ذاكرة المستخدم:
+${memorySummary || 'لم يضف المستخدم أي ذكريات بعد. ذكّره بلطف بأن يضيف أهدافه وقيمه حتى تتمكن من مساعدته حقًا.'}
+
+قواعد الرد:
+1. إن كانت هناك ذكريات مرتبطة بما يقوله، استشهد بها تحديدًا ("أنت كتبت سابقًا أن…").
+2. اطرح سؤالًا واحدًا عميقًا في نهاية ردك في أغلب الأحيان.
+3. لا تعطِ قائمة نصائح — تحدث كأنك تعرفه شخصيًا.
+4. إذا لم تكن هناك ذكريات ذات صلة، اسأله عن نفسه بدلًا من الحديث بشكل عام.
+5. ردودك لا تتجاوز 4-6 جمل عادةً.`;
+
+  const messages = [];
+  // Include last 10 exchanges for context
+  const recent = chatHistory.slice(-20);
+  recent.forEach(m => messages.push({ role: m.role==='user'?'user':'assistant', content: m.content }));
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages
+      })
+    });
+    const data = await resp.json();
+    if(data.content && data.content[0]) {
+      return data.content.map(b=>b.type==='text'?b.text:'').join('').trim();
+    }
+    return fallbackReply(userMsg);
+  } catch(e) {
+    return fallbackReply(userMsg);
+  }
+}
+
+function buildMemorySummary() {
+  if(!memories.length) return '';
+  const groups = {};
+  memories.forEach(m => {
+    if(!groups[m.cat]) groups[m.cat] = [];
+    groups[m.cat].push(m);
+  });
+
+  let summary = '';
+  Object.entries(groups).forEach(([cat, mems]) => {
+    const c = CAT_MAP[cat];
+    if(!c) return;
+    summary += `\n【${c.emoji} ${c.label}】\n`;
+    mems.slice(0,3).forEach(m => {
+      summary += `- ${m.title ? m.title+': ' : ''}${m.content.slice(0,200)}\n`;
+    });
+  });
+  return summary.trim();
+}
+
+function fallbackReply(msg) {
+  const lower = msg.toLowerCase();
+  const hasMems = memories.length > 0;
+
+  if(lower.includes('كسل') || lower.includes('تأجيل') || lower.includes('مكسل')) {
+    if(hasMems) {
+      const goal = memories.find(m=>m.cat==='goals');
+      if(goal) return `أنت كتبت يومًا: "${goal.content.slice(0,80)}…"\n\nهل ما تشعر به الآن يقربك من ذلك أم يبعدك عنه؟`;
+    }
+    return 'الكسل أحيانًا يكون صوت التعب لا صوت الإرادة.\n\nما أصغر خطوة يمكنك تنفيذها في الدقائق العشر القادمة؟';
+  }
+  if(lower.includes('استسلام') || lower.includes('أستسلم') || lower.includes('تعبت')) {
+    const val = memories.find(m=>m.cat==='values'||m.cat==='goals');
+    if(val) return `قبل أن تقرر، تذكّر أنك كتبت: "${val.content.slice(0,80)}…"\n\nهل قرار الاستسلام يتوافق مع هذا؟`;
+    return 'التعب حقيقي. لكن هل هذا تعب يستحق الراحة، أم تعب يستحق التوقف نهائيًا؟\n\nالفرق بينهما مهم جدًا.';
+  }
+  if(lower.includes('فاشل') || lower.includes('أفشل') || lower.includes('خسرت')) {
+    const success = memories.find(m=>m.cat==='success');
+    if(success) return `أنت نجحت من قبل — كتبت: "${success.content.slice(0,80)}…"\n\nماذا كان مختلفًا آنذاك؟`;
+    return 'الفشل ليس هويتك، هو حدث.\n\nما الذي تعلمته من هذا تحديدًا؟';
+  }
+  if(!hasMems) {
+    return 'أنا هنا، لكنني أحتاج أن أعرفك أولًا.\n\nأضف شيئًا في "ذاكرتك" — هدفًا، قيمة، موقفًا — وسأصبح نسختك الحقيقية.';
+  }
+  return 'أنا معك.\n\nما الذي يشغل تفكيرك الآن فعلًا؟';
+}
+
+function openClearChat() {
+  openConfirm('مسح المحادثة', 'هل تريد مسح هذه المحادثة؟ الذكريات ستبقى محفوظة.', ()=>{
+    chatHistory = [];
+    saveChat([]);
+    renderChat();
+    showToast('تم مسح المحادثة');
+  });
+}
+
+// ════════════════════════════════════════════
+//  CONFIRM MODAL
+// ════════════════════════════════════════════
+let confirmCallback = null;
+function openConfirm(title, msg, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function closeConfirm() {
+  document.getElementById('confirm-modal').classList.remove('open');
+  confirmCallback = null;
+}
+document.getElementById('confirm-ok').onclick = () => {
+  if(confirmCallback) confirmCallback();
+  closeConfirm();
+};
+
+// close modals on overlay click
+['edit-modal','confirm-modal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e){
+    if(e.target===this) this.classList.remove('open');
+  });
+});
+
+// ════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+function init() {
+  renderCatGrid('cat-grid', selectedCat, (id)=>{
+    selectedCat=id;
+    renderCatGrid('cat-grid',selectedCat,(i)=>{selectedCat=i;});
+  });
+  renderCatGrid('edit-cat-grid', editSelectedCat, (id)=>{
+    editSelectedCat=id;
+    renderCatGrid('edit-cat-grid',editSelectedCat,(i)=>{editSelectedCat=i;});
+  });
+  renderChat();
+}
+
+init();
+</script>
+</body>
+</html>
